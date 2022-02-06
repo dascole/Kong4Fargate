@@ -68,7 +68,7 @@ resource "aws_nat_gateway" "main" {
   depends_on = [aws_internet_gateway.main]
 }
 resource "aws_ecs_cluster" "main" {
-  name = "${var.name}-${var.environment}-cluster"
+  name = "${var.name}-${var.env}-cluster"
   capacity_providers = ["FARGATE_SPOT", "FARGATE"]
   default_capacity_provider_strategy {
       capacity_provider = "FARGATE_SPOT"
@@ -80,12 +80,13 @@ resource "aws_ecs_cluster" "main" {
   tags = var.additional_tags
 }
 resource "aws_lb" "main" {
-  name                       = "${var.name}-${var.environment}-lb"
+  name                       = "${var.name}-${var.env}-lb"
   tags                       = var.additional_tags
   subnets                    = aws_subnet.public.*.id
   load_balancer_type         = "network"
   enable_deletion_protection = false
   internal                   = false
+
 }
 resource "aws_iam_role" "ecs_task_execution_role" {
   name = "${var.name}-ecsTaskExecutionRole"
@@ -110,11 +111,11 @@ resource "aws_iam_role_policy_attachment" "ecs-task-execution-role-policy-attach
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 resource "aws_cloudwatch_log_group" "main" {
-  name = "${var.aws_cloudwatch_group}-${var.environment}"
+  name = "${var.aws_cloudwatch_group}-${var.env}"
   tags                     = merge(
     var.additional_tags,
     { 
-      Name : "kong-fargate-${var.environment}",
+      Name : "kong-fargate-${var.env}",
     },
   )  
 }

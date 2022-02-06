@@ -1,6 +1,25 @@
 locals {
   kong_license_base64  = base64encode(file("${path.module}/license"))
+  kong_license_file  = jsonencode(file("${path.module}/license"))
 }
+
+
+// ---------------------------------------------------------
+// Create a RDS Postgres Instance
+// ---------------------------------------------------------
+resource "aws_db_instance" "kongdb" {
+  allocated_storage    = "${var.rds_storage}"
+  engine               = "postgres"
+  engine_version       = "${var.rds_engine_version}"
+  instance_class       = "${var.rds_class}"
+  name                 = "kong"
+  username             = "${var.rds_username}"
+  password             = "${var.rds_password}"
+  skip_final_snapshot  = true
+  identifier           = "${var.rds_id}"
+  publicly_accessible  = "${var.rds_access}"
+}
+
 
 // ---------------------------------------------------------
 // HTTP TCP Trafic | map:80:8080
@@ -17,7 +36,7 @@ resource "aws_lb_listener" "kong_http" {
   depends_on = [aws_lb_target_group.kong_http]
 }
 resource "aws_lb_target_group" "kong_http" {
-  name            = "${var.name}-${var.environment}-tcp-http"
+  name            = "${var.name}-${var.env}-tcp-http"
   tags            = var.additional_tags
   vpc_id          = aws_vpc.main.id
   port            = var.lb_tcp_http_listen_port
@@ -50,7 +69,7 @@ resource "aws_lb_listener" "kong_https" {
   depends_on = [aws_lb_target_group.kong_https]
 }
 resource "aws_lb_target_group" "kong_https" {
-  name            = "${var.name}-${var.environment}-tcp-https"
+  name            = "${var.name}-${var.env}-tcp-https"
   tags            = var.additional_tags
   vpc_id          = aws_vpc.main.id
   port            = var.lb_tcp_https_listen_port
@@ -83,7 +102,7 @@ resource "aws_lb_listener" "kong_admin_api" {
   depends_on = [aws_lb_listener.kong_admin_api]
 }
 resource "aws_lb_target_group" "kong_admin_api" {
-  name            = "${var.name}-${var.environment}-tcp-admin-api"
+  name            = "${var.name}-${var.env}-tcp-admin-api"
   tags            = var.additional_tags
   vpc_id          = aws_vpc.main.id
   port            = var.lb_tcp_admin_api_listen_port
@@ -116,7 +135,7 @@ resource "aws_lb_listener" "kong_admin_gui" {
   depends_on = [aws_lb_target_group.kong_admin_gui]
 }
 resource "aws_lb_target_group" "kong_admin_gui" {
-  name            = "${var.name}-${var.environment}-tcp-admin-gui"
+  name            = "${var.name}-${var.env}-tcp-admin-gui"
   tags            = var.additional_tags
   vpc_id          = aws_vpc.main.id
   port            = var.lb_tcp_admin_gui_listen_port
@@ -142,9 +161,10 @@ data template_file td_proxy {
   template = file("${path.module}/tasks/kongproxy-${var.kong_proxy_type}.tpl")
   vars = {
     region                        = var.region
-    environment                   = var.environment
+    environment                   = var.env
     image_kong_proxy              = var.image_kong_proxy
     kong_license_base64           = local.kong_license_base64
+    kong_license                  = ""
     aws_cloudwatch_group          = var.aws_cloudwatch_group
     lb_tcp_health_port            = var.lb_tcp_health_port
     lb_tcp_http_listen_port       = var.lb_tcp_http_listen_port
@@ -159,6 +179,22 @@ data template_file td_proxy {
     kong_pg_password              = var.kong_pg_password
     kong_pg_database              = var.kong_pg_database
     kong_pg_ssl_verify            = var.kong_pg_ssl_verify
+    kong_pg_host                  = aws_db_instance.kongdb.address
+    kong_pg_port                  = aws_db_instance.kongdb.port
+    kong_port_maps                = var.kong_port_maps
+    kong_admin_listen             = var.kong_admin_listen
+    kong_status_listen            = var.kong_status_listen
+    kong_proxy_listen             = var.kong_proxy_listen
+    kong_admin_error_log          = var.kong_admin_error_log
+    kong_proxy_error_log          = var.kong_proxy_error_log
+    kong_proxy_access_log         = var.kong_proxy_access_log
+    kong_admin_access_log         = var.kong_admin_access_log
+    kong_admin_gui_error_log      = var.kong_admin_gui_error_log
+    kong_portal_api_error_log     = var.kong_portal_api_error_log
+    kong_portal_api_access_log    = var.kong_portal_api_access_log
+    kong_admin_gui_access_log     = var.kong_admin_gui_access_log
+    kong_nginx_worker_procesess   = var.kong_nginx_worker_procesess
+    kong_lua_package_path         = var.kong_lua_package_path
   }
 }
 resource "aws_ecs_task_definition" "main" {
@@ -169,6 +205,7 @@ resource "aws_ecs_task_definition" "main" {
   memory                   = 1024
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   container_definitions    = data.template_file.td_proxy.rendered
+  depends_on = [aws_db_instance.kongdb]
   tags                     = merge(
     var.additional_tags,
     { 
@@ -184,7 +221,7 @@ resource "aws_ecs_task_definition" "main" {
 data "aws_ecs_task_definition" "main" {task_definition = "${aws_ecs_task_definition.main.family}"}
 
 resource "aws_ecs_service" "main" {
-  name                               = "${var.name}-${var.environment}-gateway"
+  name                               = "${var.name}-${var.env}-gateway"
   cluster                            = aws_ecs_cluster.main.id
   task_definition                    = "${aws_ecs_task_definition.main.family}:${max("${aws_ecs_task_definition.main.revision}", "${data.aws_ecs_task_definition.main.revision}")}"
   desired_count                      = 2
@@ -247,7 +284,7 @@ resource "aws_ecs_service" "main" {
 // Fargate Kong API Gateway Security Group
 // ---------------------------------------------------------
 resource "aws_security_group" "kong_gateway" {
-  name   = "${var.name}-${var.environment}"
+  name   = "${var.name}-${var.env}"
   vpc_id = aws_vpc.main.id
  
   ingress {

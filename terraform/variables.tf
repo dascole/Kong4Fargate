@@ -6,7 +6,7 @@ variable "revision" {
     description = "Deployment Revision"
     default = "v00.07"
 }
-variable "environment" {
+variable "env" {
     default = "prod"
 }
 variable "kong_proxy_type" {
@@ -98,4 +98,87 @@ variable "kong_pg_database" {
 }
 variable "kong_pg_ssl_verify" {
     default = "on"
+}
+variable "rds_storage" {
+    description = "Storage size for DB instance"
+    default = 40
+}
+variable "rds_class" {
+    description = "The instance type of the RDS instance"
+    default = "db.t3.micro"
+}
+variable "rds_engine_version" {
+    description = "DB Version"
+    default = "10.19"
+}
+variable "rds_username" {
+    description = "Username for the master DB user"
+    default = "postgres"
+}
+variable "rds_password" {
+    description = "Password for the master DB user"
+    default = "kongstrong"
+}
+variable "rds_id" {
+    description = "The name of the RDS instance"
+    default = "kong-db-edu"
+}
+variable "rds_access" {
+    description = "Bool to control if instance is publicly accessible"
+    default = "true"
+}
+variable "kong_port_maps" {
+    default = "80:8080, 443:8443"
+}
+variable "kong_admin_listen" {
+    description = "Admin API listen port"
+    default = "0.0.0.0:8444 http2 ssl"
+}
+variable "kong_status_listen" {
+    description = "Status listen port"
+    default = "0.0.0.0:8100"
+}
+variable "kong_proxy_listen" {
+    description = "Proxy listen port"
+    default = "0.0.0.0:8001, 0.0.0.0:8443 http2 ssl"
+}
+variable "kong_admin_error_log" {
+    description = "Admin API error log location"
+    default = "/dev/stderr"
+}
+variable "kong_proxy_error_log" {
+    description = "Proxy error log location"
+    default = "/dev/stderr"
+}
+variable "kong_proxy_access_log" {
+    description = "Proxy access log location"
+    default = "/dev/stdout"
+}
+variable "kong_admin_access_log" {
+    description = "Admin API access log location"
+    default = "/dev/stdout"
+}
+variable "kong_admin_gui_error_log" {
+    description = "Admin GUI error log location"
+    default = "/dev/stderr"
+}
+variable "kong_portal_api_error_log" {
+    description = "Portal API error log location"
+    default = "/dev/stderr"
+}
+variable "kong_portal_api_access_log" {
+    description = "Portal API access log location"
+    default = "/dev/stdout"
+}
+variable "kong_admin_gui_access_log" {
+    description = "Admin GUI access log location"
+    default = "/dev/stdout"
+}
+variable "kong_nginx_worker_procesess" {
+    description = "Number of nginx worker processes"
+    default = "auto"
+}
+variable "kong_lua_package_path" {
+    description = "Sets the Lua module search path"
+    default = "/opt/?.lua;/opt/?/init.lua;;"
 }

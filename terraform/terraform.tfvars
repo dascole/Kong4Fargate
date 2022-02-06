@@ -5,10 +5,10 @@
 name                 = "Kong4Fargate"
 revision             = "v00.07.24"
 aws_profile          = "default"
-environment          = "dev"
+env                  = "dev"
 additional_tags      = { 
     Name : "Kong4Fargate",
-    ownerName : "usrbinkat",
+    ownerName : "jdasc",
     Application : "kong-api-gateway",
     Revision    : "v00.07.23"
     Environment : "dev"
@@ -25,9 +25,8 @@ image_kong_proxy     = "quay.io/containercraft/kong:b64lsup-a02-d9eccaa" // test
 kong_log_level       = "debug"
 kong_pg_port         = "5432"
 kong_database        = "postgres"
-kong_pg_user         = "rdspostgresql"
-kong_pg_host         = "db-kong-fargate-dev.ctzjaxtr66nw.us-east-2.rds.amazonaws.com"
-kong_pg_password     = "rdspostgresql"
+kong_pg_user         = "postgres"
+kong_pg_password     = "kongstrong"
 kong_pg_database     = "kong"
 kong_pg_ssl_verify   = "off"
 
@@ -38,8 +37,8 @@ kong_pg_ssl_verify   = "off"
 // ----------------------------------------------------------------------
 
 // AWS Region & Zones
-region               = "us-east-2"
-availability_zones   = ["us-east-2a", "us-east-2b", "us-east-2c"]
+region               = "us-east-1"
+availability_zones   = ["us-east-1a", "us-east-1b", "us-east-1c"]
 capabilities         = "FARGATE"        // supported: FARGATE, FARGATE_SPOT
 
 // VPC CIDRs
