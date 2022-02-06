@@ -1,6 +1,5 @@
 locals {
-  kong_license_base64  = base64encode(file("${path.module}/license"))
-  kong_license_file  = jsonencode(file("${path.module}/license"))
+  kong_license_file  = file("${path.module}/license")
 }
 
 
@@ -163,8 +162,7 @@ data template_file td_proxy {
     region                        = var.region
     environment                   = var.env
     image_kong_proxy              = var.image_kong_proxy
-    kong_license_base64           = local.kong_license_base64
-    kong_license                  = ""
+    kong_license                  = local.kong_license_file
     aws_cloudwatch_group          = var.aws_cloudwatch_group
     lb_tcp_health_port            = var.lb_tcp_health_port
     lb_tcp_http_listen_port       = var.lb_tcp_http_listen_port
