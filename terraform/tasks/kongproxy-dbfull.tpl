@@ -27,8 +27,8 @@
     },
     "environment": [
       {
-        "name": "KONG_LICENSE_DATA_B64",
-        "value": "${kong_license_base64}"
+        "name": "KONG_LICENSE_DATA",
+        "value": "${kong_license}"
       },
       {
         "name": "KONG_PG_USER",
@@ -121,8 +121,8 @@
   {
     "environment": [
       {
-        "name": "KONG_LICENSE_DATA_B64",
-        "value": "${kong_license_base64}"
+        "name": "KONG_LICENSE_DATA",
+        "value": "${kong_license}"
       },
       {
         "name": "KONG_PG_USER",
