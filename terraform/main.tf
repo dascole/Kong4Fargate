@@ -67,12 +67,20 @@ resource "aws_nat_gateway" "main" {
   subnet_id = element(aws_subnet.public.*.id, count.index)
   depends_on = [aws_internet_gateway.main]
 }
+
+resource "aws_ecs_cluster_capacity_providers" "main" {
+  cluster_name = aws_ecs_cluster.main.name
+
+  capacity_providers = ["FARGATE_SPOT", "FARGATE"]
+
+  default_capacity_provider_strategy {
+    capacity_provider = "FARGATE_SPOT"
+    weight            = 1  # Optional, adjust weight if needed
+  }
+}
+
 resource "aws_ecs_cluster" "main" {
   name = "${var.name}-${var.env}-cluster"
-  capacity_providers = ["FARGATE_SPOT", "FARGATE"]
-  default_capacity_provider_strategy {
-      capacity_provider = "FARGATE_SPOT"
-  }
   setting {
     name  = "containerInsights"
     value = "disabled"

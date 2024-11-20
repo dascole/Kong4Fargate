@@ -3,13 +3,6 @@
         "essential": true,
         "name": "kong-proxy",
         "image": "${image_kong_proxy}",
-        "entryPoint": [
-            "/docker-entrypoint.sh"
-        ],
-        "command": [
-            "kong",
-            "docker-start"
-        ],
         "healthCheck": {
             "command": [
                 "CMD-SHELL",
@@ -93,9 +86,6 @@
                 "name": "KONG_PG_DATABASE",
                 "value": "kong"
             },{
-                "name": "KONG_DATABASE",
-                "value": "postgres"
-            },{
                 "name": "KONG_LOG_LEVEL",
                 "value": "debug"
             },{
@@ -110,9 +100,6 @@
             },{
                 "name": "KONG_KIC",
                 "value": "on"
-            },{
-                "name": "KONG_LICENSE_DATA_B64",
-                "value": "${kong_license_base64}"
             },{
                 "name": "KONG_PLUGINS",
                 "value": "bundled"
@@ -176,6 +163,43 @@
             },{
                 "name": "KONG_LUA_PACKAGE_PATH",
                 "value": "/opt/?.lua;/opt/?/init.lua;;"
-            }]
+            },
+            {
+                "name": "KONG_ROLE",
+                "value": "data_plane"
+            },
+            {
+                "name": "KONG_CLUSTER_MTLS",
+                "value": "pki"
+            },
+            {
+                "name": "KONG_KONNECT_MODE",
+                "value": "on"
+            },
+            {
+                "name": "KONG_CLUSTER_CONTROL_PLANE",
+                "value": ""
+            },
+            {
+                "name": "KONG_CLUSTER_SERVER_NAME",
+                "value": ""
+            },
+            {
+                "name": "KONG_CLUSTER_TELEMETRY_ENDPOINT",
+                "value": ""
+            },
+            {
+                "name": "KONG_CLUSTER_TELEMETRY_SERVER_NAME",
+                "value": ""
+            },
+            {
+                "name": "KONG_CLUSTER_CERT",
+                "value": "${kong_cluster_cert}"
+            },
+            {
+                "name": "KONG_CLUSTER_CERT_KEY",
+                "value": "${kong_cluster_cert_key}"
+            }
+            ]
     }
 ]

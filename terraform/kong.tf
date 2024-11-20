@@ -1,23 +1,25 @@
 locals {
   kong_license_file  = file("${path.module}/license")
+  kong_cluster_cert_file     = file("${path.module}/tls.crt")
+  kong_cluster_cert_key_file = file("${path.module}/tls.key")
 }
 
 
 // ---------------------------------------------------------
 // Create a RDS Postgres Instance
 // ---------------------------------------------------------
-resource "aws_db_instance" "kongdb" {
-  allocated_storage    = "${var.rds_storage}"
-  engine               = "postgres"
-  engine_version       = "${var.rds_engine_version}"
-  instance_class       = "${var.rds_class}"
-  name                 = "kong"
-  username             = "${var.rds_username}"
-  password             = "${var.rds_password}"
-  skip_final_snapshot  = true
-  identifier           = "${var.rds_id}"
-  publicly_accessible  = "${var.rds_access}"
-}
+//resource "aws_db_instance" "kongdb" {
+//  allocated_storage    = "${var.rds_storage}"
+//  engine               = "postgres"
+//  engine_version       = "${var.rds_engine_version}"
+//  instance_class       = "${var.rds_class}"
+//  name                 = "kong"
+//  username             = "${var.rds_username}"
+//  password             = "${var.rds_password}"
+//  skip_final_snapshot  = true
+//  identifier           = "${var.rds_id}"
+//  publicly_accessible  = "${var.rds_access}"
+//}
 
 
 // ---------------------------------------------------------
@@ -156,9 +158,9 @@ resource "aws_lb_target_group" "kong_admin_gui" {
 // ---------------------------------------------------------
 // ECS Fargate Task Definition -- Proxy
 // ---------------------------------------------------------
-data template_file td_proxy {
-  template = file("${path.module}/tasks/kongproxy-${var.kong_proxy_type}.tpl")
-  vars = {
+
+locals {
+  td_proxy = templatefile("${path.module}/tasks/kongproxy-${var.kong_proxy_type}.tpl", {
     region                        = var.region
     environment                   = var.env
     image_kong_proxy              = var.image_kong_proxy
@@ -170,16 +172,17 @@ data template_file td_proxy {
     lb_tcp_admin_api_listen_port  = var.lb_tcp_admin_api_listen_port
     lb_tcp_admin_gui_listen_port  = var.lb_tcp_admin_gui_listen_port
     kong_log_level                = var.kong_log_level
-    kong_pg_port                  = var.kong_pg_port
     kong_database                 = var.kong_database
-    kong_pg_user                  = var.kong_pg_user
-    kong_pg_host                  = var.kong_pg_host
-    kong_pg_password              = var.kong_pg_password
-    kong_pg_database              = var.kong_pg_database
-    kong_pg_ssl_verify            = var.kong_pg_ssl_verify
-    kong_pg_host                  = aws_db_instance.kongdb.address
-    kong_pg_port                  = aws_db_instance.kongdb.port
     kong_port_maps                = var.kong_port_maps
+    kong_cluster_cert             = local.kong_cluster_cert_file
+    kong_cluster_cert_key         = local.kong_cluster_cert_key_file
+    kong_role                     = var.kong_role
+    kong_cluster_mtls             = var.kong_cluster_mtls
+    kong_konnect_mode             = var.kong_konnect_mode
+    kong_cluster_control_plane    = var.kong_cluster_control_plane
+    kong_cluster_server_name      = var.kong_cluster_server_name
+    kong_cluster_telemetry_endpoint = var.kong_cluster_telemetry_endpoint
+    kong_cluster_telemetry_server_name = var.kong_cluster_telemetry_server_name
     kong_admin_listen             = var.kong_admin_listen
     kong_status_listen            = var.kong_status_listen
     kong_proxy_listen             = var.kong_proxy_listen
@@ -193,8 +196,15 @@ data template_file td_proxy {
     kong_admin_gui_access_log     = var.kong_admin_gui_access_log
     kong_nginx_worker_procesess   = var.kong_nginx_worker_procesess
     kong_lua_package_path         = var.kong_lua_package_path
-  }
+  })
 }
+
+# Example output to see the rendered template
+output "rendered_kong_proxy" {
+  value = local.td_proxy
+}
+
+
 resource "aws_ecs_task_definition" "main" {
   family                   = "kong-api-gateway"
   network_mode             = "awsvpc"
@@ -202,8 +212,7 @@ resource "aws_ecs_task_definition" "main" {
   cpu                      = 256
   memory                   = 1024
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  container_definitions    = data.template_file.td_proxy.rendered
-  depends_on = [aws_db_instance.kongdb]
+  container_definitions    = local.td_proxy
   tags                     = merge(
     var.additional_tags,
     { 

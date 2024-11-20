@@ -78,11 +78,34 @@ variable "lb_tcp_admin_gui_listen_port" {
 variable "kong_log_level" {
     default = "info"
 }
+/////
+variable "kong_cluster_mtls" {
+    default = "pki"
+}
+variable "kong_konnect_mode" {
+    default = "on"
+}
+variable "kong_cluster_control_plane" {
+    default = ""
+}
+variable "kong_cluster_server_name" {
+    default = ""
+}
+variable "kong_cluster_telemetry_endpoint" {
+    default = ""
+}
+variable "kong_cluster_telemetry_server_name" {
+    default = ""
+}
+//////
+variable "kong_role" {
+    default = "data_plane"
+}
 variable "kong_pg_port" {
     default = "5432"
 }
 variable "kong_database" {
-    default = "postgres"
+    default = "off"
 }
 variable "kong_pg_user" {
     default = "kong"
